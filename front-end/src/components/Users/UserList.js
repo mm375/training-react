@@ -3,12 +3,36 @@ import { useState } from 'react';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import './user.scss';
+import { useEffect } from 'react';
+import { API } from '../../configs/constant';
+import { fetchAsGet } from '../../services/api';
+import Progress from '../commons/Progress';
 
 export default function UserList() {
-  const [users] = useState(data);
-  console.log(users);
+  const [users, setUsers] = useState([]);
+  const [totalPage, setTotalPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    setIsLoading(true);
+    fetchData(current);
+
+    return () => { current = false; };
+  }, []);
+
+  async function fetchData(current) {
+    const res = await fetchAsGet(API.USER.GET);
+    if (current && res.isOk) {
+      setUsers(res.data.data);
+      setTotalPage(res.data.total);
+    }
+    setIsLoading(false);
+  }
+
   return (
     <div>
+      {isLoading && <Progress />}
       <table className='table table-striped table-hover table-bordered table-responsive'>
         <thead>
           <tr>
@@ -21,7 +45,7 @@ export default function UserList() {
         </thead>
         <tbody>
           {
-            users.map((item, idx) =>
+            users && users.map((item, idx) =>
               <tr key={idx}>
                 <td>{item.id}</td>
                 <td>{item.name}</td>
@@ -39,7 +63,7 @@ export default function UserList() {
       </table>
 
       <Stack spacing={2} direction="row" justifyContent="flex-end">
-        <Pagination count={10} />
+        <Pagination count={totalPage} />
       </Stack>
     </div>
   );
